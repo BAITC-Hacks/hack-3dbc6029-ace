@@ -1,2 +1,23 @@
-# hack-3dbc6029-ace
-Hackathon team repository for ACE
+# LECTOR AI
+
+将讲稿转换为有原文依据的摘要、要点、测试题和复习卡片。
+
+当前状态：任务分工与技术方案已整理，应用尚未实现。本仓库当前没有可运行的演示，运行和部署说明将在实现后补充。
+
+## 团队与分工
+
+| 成员 | 开发分支 | 主要职责 |
+| --- | --- | --- |
+| elika-88 | `elika` | 项目初始化、共享数据接口、AI 流程、来源校验、后端测试、部署 |
+| xiaomao | `xiaomao` | 输入与结果界面、测试题和卡片交互、来源展示、浏览器测试、演示材料 |
+
+- [两人任务分工与协作流程](docs/team-tasks.md)：任务编号、文件归属、依赖、验收标准和 Git 流程。
+- [完整技术实施方案](docs/implementation-plan.md)：架构、数据结构、提示词、可靠性和测试设计。
+
+## 核心交付
+
+输入讲稿后，通过真实 OpenAI API 生成四类学习材料；显示对应原文；支持答题、卡片复习和重新生成；明确处理空输入、短输入及生成失败。
+
+计划技术栈：Next.js、TypeScript、Tailwind CSS、shadcn/ui、OpenAI Responses API、Zod、Vercel。
+
+演示讲稿可以预置，生成结果必须现场处理。API 密钥仅保存在服务端环境变量中，不提交到 GitHub。
