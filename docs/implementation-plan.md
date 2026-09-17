@@ -38,6 +38,11 @@ Use Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Lucide, the OpenAI
 JavaScript SDK, and Zod. Deploy the Node.js runtime on Vercel. Keep the requested
 default model `gpt-5-mini`, configurable through server-only `OPENAI_MODEL`.
 
+User-requested extension: optional per-request `provider` configuration contains
+baseURL, apiKey, and model. The UI keeps it in memory only. Custom settings never
+inherit server credentials; the server-side factory uses the complete custom
+configuration or the complete environment defaults. See API contract v1.1.
+
 ```text
 Lecture input
   -> server input validation

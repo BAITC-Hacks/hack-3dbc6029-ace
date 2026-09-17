@@ -21,7 +21,7 @@
 
 技术栈：Next.js App Router、React、TypeScript、Tailwind CSS、shadcn/ui 配置与按钮基础组件、Lucide、Zod；已安装 OpenAI SDK，Responses API 生成流程将在 E04 接入，目标部署为 Vercel。
 
-演示讲稿可以预置，生成结果必须现场处理。API 密钥仅保存在服务端环境变量中，不提交到 GitHub。
+演示讲稿可以预置，生成结果必须现场处理。服务器默认密钥保存在服务端环境变量中；用户自定义密钥仅在当前页面内存和请求处理中使用，不持久化、不提交到 GitHub。
 
 ## 本地运行
 
@@ -39,9 +39,18 @@ npm run dev
 | 变量 | 用途 |
 | --- | --- |
 | `OPENAI_API_KEY` | E04 起用于真实生成；不传给浏览器，不使用 NEXT_PUBLIC 前缀 |
+| `OPENAI_BASE_URL` | 服务器默认 API 根地址，默认 `https://api.openai.com/v1` |
 | `OPENAI_MODEL` | 默认 `gpt-5-mini` |
 
 `.env.local` 等本地环境文件已加入 `.gitignore`，仅 `.env.example` 可提交。
+
+## 自定义 API 设置
+
+页面的“Настройки API”中开启“Свой API”，即可填写 **API Base URL、API key、模型 ID**，支持显示/隐藏密钥和重置。未开启时使用服务器默认配置。自定义配置必须完整，不会借用服务器密钥。
+
+URL 填写 API 根地址，例如 `https://api.openai.com/v1`，模型可自由输入。支持 HTTPS 和 HTTP 本地回环地址；localhost 指服务端机器。所有设置仅保留在当前页面内存中，刷新后清空；关闭自定义模式也会清空密钥。未来接入的服务需要支持 Responses API 和结构化输出。
+
+当前已实现配置输入、请求校验和独立 SDK 客户端工厂，尚未接入 AI 生成或真实连接测试；合法请求仍返回 501。
 
 ## 检查与构建
 
@@ -62,11 +71,14 @@ npm run test:e2e
 
 本次骨架本地验证：`npm ci`、零警告 lint、typecheck、30 项单元测试、生产 build 通过；本机 Chrome 上 4 项桌面/手机视口测试通过，截图已检查。Playwright 自带 Chromium 下载在本机网络超时，因此本地浏览器结果使用上述 Chrome 回退配置；CI 的实际运行结果以 GitHub Actions 为准。
 
+自定义 API 扩展验证：零警告 lint、typecheck、生产 build、52 项单元测试和 6 项 Chrome 桌面/手机视口测试通过。验证了配置实际进入请求、默认/自定义密钥隔离、刷新后清空、重置、显示/隐藏和无浏览器持久化；未使用真实第三方密钥进行外部调用。
+
 依赖说明：当前 React ESLint 插件的 peer 范围尚未包含 ESLint 10，因此锁定兼容的 ESLint 9；npm 安装会显示该版本的弃用提示。后续升级应一起检查 Next.js ESLint 配置和插件兼容性，不使用强制忽略 peer 依赖的安装方式。
 
 ## 当前功能与限制
 
 - 可启动的俄文基础工作区、讲稿输入、语言选择、共享字数与长度校验。
+- 可选的自定义 API URL、密钥和模型；密钥不持久化，服务端配置与自定义配置隔离。
 - `POST /api/generate` 校验 JSON、请求字节、字段、讲稿长度和词数；合法输入返回 `NOT_IMPLEMENTED`，不生成假结果。
 - 严格 Zod Schema 定义四类材料、来源、审核、错误和阶段事件；包含 OpenAI SDK 的结构化输出格式转换测试。
 - AI 分析/生成/审核、token 限制、原文分段和引用语义校验、实际 NDJSON 流、学习交互、持久化会话和部署均未完成。

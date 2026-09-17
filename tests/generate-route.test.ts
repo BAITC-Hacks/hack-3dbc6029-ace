@@ -40,4 +40,18 @@ describe("generation endpoint foundation", () => {
     const response = await POST(request({ title: "", lecture: "evidence ".repeat(80), outputLanguage: "auto", apiKey: "not-allowed" }));
     expect(response.status).toBe(400);
   });
+
+  it("accepts a complete nested provider without echoing its key", async () => {
+    const response = await POST(request({ title: "", lecture: "evidence ".repeat(80), outputLanguage: "auto", provider: { baseURL: "https://gateway.example/v1", apiKey: "test-only-private-value", model: "custom-model" } }));
+    expect(response.status).toBe(501);
+    const body = await response.text();
+    expect(body).not.toContain("test-only-private-value");
+    expect(JSON.parse(body).error.code).toBe("NOT_IMPLEMENTED");
+  });
+
+  it("rejects partial provider settings with a dedicated error", async () => {
+    const response = await POST(request({ title: "", lecture: "evidence ".repeat(80), outputLanguage: "auto", provider: { baseURL: "https://gateway.example/v1", model: "custom-model" } }));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.code).toBe("INVALID_PROVIDER_CONFIG");
+  });
 });

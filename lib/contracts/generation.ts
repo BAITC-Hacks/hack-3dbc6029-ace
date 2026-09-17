@@ -4,6 +4,8 @@ import { StudyKitSchema } from "@/lib/schemas/studyMaterials";
 
 export { GenerateRequestSchema, OutputLanguageSchema } from "@/lib/input";
 export type { GenerateRequest, OutputLanguage } from "@/lib/input";
+export { ProviderConfigSchema } from "@/lib/provider";
+export type { ProviderConfig } from "@/lib/provider";
 export { ErrorResponseSchema, GenerationErrorSchema } from "@/lib/contracts/errors";
 export type { GenerationError, ErrorResponse, ErrorCode } from "@/lib/contracts/errors";
 

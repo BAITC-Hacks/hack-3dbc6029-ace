@@ -1,4 +1,4 @@
-# E02 生成接口与共享类型 v1
+# E02 生成接口与共享类型 v1.1
 
 本文件对应项目骨架的接口定义。`POST /api/generate` 已实现请求校验和 JSON 错误响应；合法输入目前返回 **HTTP 501 / `NOT_IMPLEMENTED`**。AI 生成、流式传输、原文分段、语义审核和结果页尚未实现，不应把这个版本作为比赛完成版。
 
@@ -10,7 +10,9 @@
 | `lib/schemas/studyMaterials.ts` | AI 输入/输出 Schema、最终 `StudyKitSchema` 和由 Zod 推导的类型 | elika-88 |
 | `lib/contracts/generation.ts` | 进度事件 Schema、联合类型、NDJSON 编码、终止事件判断；重新导出请求和错误类型 | elika-88 |
 | `lib/contracts/errors.ts` | 稳定错误码、错误响应 Schema、HTTP 状态映射 | elika-88 |
+| `lib/provider.ts` | 自定义 API URL、密钥和模型的 Schema 与默认值 | elika-88 |
 | `lib/server/env.ts` | 服务端环境变量读取，标记为 `server-only` | elika-88 |
+| `lib/openai.ts` | 按请求创建独立 SDK 客户端；返回 client 和 model | elika-88 |
 
 xiaomao 直接从这些模块导入类型，不另建 DTO。共享模块不会导入 OpenAI 客户端或服务端密钥。`lib/server/` 不可导入到客户端组件；环境校验延迟到实际调用，因此安装、测试和构建不需要 API 密钥。
 
@@ -29,7 +31,30 @@ Content-Type: application/json
 }
 ```
 
-三个字段都必填，`title` 可为空字符串。支持 `auto`、`ru`、`en`、`zh`；`auto` 表示跟随讲稿语言。请求不接受其他字段，例如客户端传入的 `apiKey`。文本不做自动 trim 或改写，以保留原文引用位置。
+上述三个字段都必填，`title` 可为空字符串。支持 `auto`、`ru`、`en`、`zh`；`auto` 表示跟随讲稿语言。文本不做自动 trim 或改写，以保留原文引用位置。
+
+v1.1 新增可选的 `provider` 对象，未提供时保留服务器默认配置模式，旧请求继续有效：
+
+```json
+{
+  "title": "",
+  "lecture": "用户提交的完整讲稿",
+  "outputLanguage": "auto",
+  "provider": {
+    "baseURL": "https://api.openai.com/v1",
+    "apiKey": "<user-supplied-key>",
+    "model": "gpt-5-mini"
+  }
+}
+```
+
+自定义模式的三个字段必须完整，不能从服务端密钥补齐缺失值。拒绝顶层 `apiKey`、未知字段和 null provider。URL 与模型/密钥会去除首尾空白，URL 去除末尾斜杠。模型 ID 是自由文本，允许 `vendor/model`，不绑定固定列表。
+
+Base URL 必须为 HTTPS，或 HTTP 的 localhost / 127.0.0.1 / ::1；拒绝 URL 内的用户名、密码、查询参数和 fragment。填写 API 根地址（如 `/v1`），不是 `/responses` 或 `/chat/completions` 的完整操作地址。本地地址指应用服务端所在机器，不是远端访问者的设备。
+
+自定义设置只存在于页面内存，不写入 localStorage、sessionStorage、cookie 或配置文件；刷新清空，切回服务器模式或重置会清空密钥。提交时 provider 经请求正文发送到本站服务端，错误响应不回显密钥，不能把整个请求对象存到学习会话或日志中。
+
+后续 E04 使用 `createOpenAIClient(request.provider)` 获取 client/model。工厂会隔离服务端 admin key、organization、project 等隐式环境配置，关闭 SDK 日志和自动重试，禁止请求重定向。当前生成路由仅验证配置，仍返回 501，不向自定义地址发起外部请求；测试工厂的请求转发使用单元测试专用传输替身。外部服务是否支持 Responses API 和 Structured Outputs 尚未实测，公网接入时需在 E04/E06 中实现出站目标策略，不能将配置校验等同于网络访问授权。
 
 当前输入规则：
 
@@ -59,6 +84,7 @@ Content-Type: application/json
 | 错误码 | HTTP 状态 | 当前骨架可返回 |
 | --- | --- | --- |
 | `INVALID_REQUEST` | 400 | 是：无效 JSON、编码、结构或标题长度 |
+| `INVALID_PROVIDER_CONFIG` | 400 | 是：自定义 URL、密钥或模型不完整或不合法 |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | 是：Content-Type 不是 JSON |
 | `EMPTY_INPUT` | 400 | 是 |
 | `INPUT_TOO_SHORT` | 400 | 是 |

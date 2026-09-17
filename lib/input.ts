@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { GenerationError } from "@/lib/contracts/errors";
+import { ProviderConfigSchema } from "@/lib/provider";
 
 export const INPUT_LIMITS = {
   minContentCharacters: 300,
@@ -18,6 +19,7 @@ export const GenerateRequestSchema = z.strictObject({
   title: z.string().max(INPUT_LIMITS.maxTitleCharacters),
   lecture: z.string(),
   outputLanguage: OutputLanguageSchema,
+  provider: ProviderConfigSchema.optional(),
 });
 export type GenerateRequest = z.infer<typeof GenerateRequestSchema>;
 
@@ -56,6 +58,12 @@ export type InputValidationResult =
 export function validateGenerationInput(input: unknown): InputValidationResult {
   const parsed = GenerateRequestSchema.safeParse(input);
   if (!parsed.success) {
+    if (parsed.error.issues.some((issue) => issue.path[0] === "provider")) {
+      return {
+        success: false,
+        error: { code: "INVALID_PROVIDER_CONFIG", message: "Provide a valid API base URL, API key, and model ID.", retryable: false },
+      };
+    }
     return {
       success: false,
       error: { code: "INVALID_REQUEST", message: "Provide a title, lecture, and supported output language.", retryable: false },

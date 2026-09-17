@@ -50,7 +50,7 @@ E02 由 elika-88 编写，xiaomao 评审后双方开始依赖它。下表契约�
 
 | 项目 | 约定 |
 | --- | --- |
-| 请求 | `POST /api/generate`，JSON 为 `{ title, lecture, outputLanguage }`；标题可为空字符串，语言为 `auto`、`ru`、`en` 或 `zh` |
+| 请求 | `POST /api/generate`，JSON 为 `{ title, lecture, outputLanguage, provider? }`；provider 为自定义 `{ baseURL, apiKey, model }`，不传则使用服务器配置；详情见接口契约 v1.1 |
 | 客户端请求身份 | 每次提交生成本地请求标识；只允许当前请求更新状态；取消或重新提交时废弃旧标识 |
 | 非流式错误 | 开始处理前返回相应 HTTP 状态和 `{ error: { code, message, retryable } }` |
 | 传输 | 成功开始后使用 `application/x-ndjson`；每行一个完整 JSON 事件，客户端按换行缓冲解析 |

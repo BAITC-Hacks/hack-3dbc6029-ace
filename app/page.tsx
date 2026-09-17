@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { AlertCircle, ArrowRight, BookOpenText, FileText, Languages, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProviderSettings } from "@/components/ProviderSettings";
+import { DEFAULT_API_BASE_URL, DEFAULT_MODEL, type ProviderConfig } from "@/lib/provider";
 import { ErrorResponseSchema, type ErrorCode } from "@/lib/contracts/generation";
 import { countWords, INPUT_LIMITS, OutputLanguageSchema, validateGenerationInput, type OutputLanguage } from "@/lib/input";
 
@@ -11,6 +13,7 @@ const errorMessages: Partial<Record<ErrorCode, string>> = {
   INPUT_TOO_SHORT: "Добавьте больше текста: минимум 80 слов и 300 символов без пробелов.",
   INPUT_TOO_LONG: "Лекция слишком длинная. Максимум 60 000 символов.",
   INVALID_REQUEST: "Проверьте название, текст и язык материалов.",
+  INVALID_PROVIDER_CONFIG: "Проверьте API URL, ключ и модель. Все три поля обязательны; URL должен использовать HTTPS (HTTP допустим для localhost).",
   NOT_IMPLEMENTED: "Генерация материалов пока недоступна.",
 };
 const fieldClass = "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60";
@@ -22,12 +25,14 @@ export default function Home() {
   const [outputLanguage, setOutputLanguage] = useState<OutputLanguage>("auto");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [customApi, setCustomApi] = useState(false);
+  const [provider, setProvider] = useState<ProviderConfig>({ baseURL: DEFAULT_API_BASE_URL, apiKey: "", model: DEFAULT_MODEL });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
     setError(null);
-    const validation = validateGenerationInput({ title, lecture, outputLanguage });
+    const validation = validateGenerationInput({ title, lecture, outputLanguage, ...(customApi ? { provider } : {}) });
     if (!validation.success) {
       setError(errorMessages[validation.error.code] ?? validation.error.message);
       return;
@@ -64,7 +69,7 @@ export default function Home() {
           <FileText className="size-5 text-[#a66b13]" aria-hidden="true" />
           <h1 className="text-2xl font-semibold">Новая лекция</h1>
         </div>
-        <form onSubmit={submit} className="space-y-6" aria-busy={pending}>
+        <form onSubmit={submit} className="space-y-6" aria-busy={pending} noValidate>
           <div>
             <label htmlFor="title" className="mb-2 block text-sm font-medium">Название <span className="font-normal text-muted-foreground">(необязательно)</span></label>
             <input id="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={INPUT_LIMITS.maxTitleCharacters} disabled={pending} className={fieldClass} placeholder="Название лекции" />
@@ -76,6 +81,10 @@ export default function Home() {
             </div>
             <textarea id="lecture" value={lecture} onChange={(event) => { setLecture(event.target.value); setError(null); }} maxLength={INPUT_LIMITS.maxCharacters} disabled={pending} className={`${fieldClass} min-h-72 leading-7 sm:min-h-88`} placeholder="Текст вашей лекции…" aria-describedby={error ? "lecture-count form-error" : "lecture-count"} />
           </div>
+          <ProviderSettings enabled={customApi} value={provider} disabled={pending}
+            onEnabledChange={(enabled) => { setCustomApi(enabled); setProvider((value) => ({ ...value, apiKey: "" })); setError(null); }}
+            onChange={(value) => { setProvider(value); setError(null); }}
+            onReset={() => { setProvider({ baseURL: DEFAULT_API_BASE_URL, apiKey: "", model: DEFAULT_MODEL }); setCustomApi(false); setError(null); }} />
           <div className="flex flex-col gap-5 border-t border-border pt-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="w-full sm:w-64">
               <label htmlFor="language" className="mb-2 flex items-center gap-2 text-sm font-medium"><Languages className="size-4 text-muted-foreground" aria-hidden="true" />Язык материалов</label>
