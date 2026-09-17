@@ -1,14 +1,16 @@
 # LECTOR AI implementation plan
 
-Status: proposed, awaiting user approval before application implementation.
+Status: E01/E02 foundation implementation authorized and delivered in code;
+local quality checks passed and teammate contract review pending. Later phases
+remain planned. See [API contract](api-contract.md) for the current runtime boundary.
 
 ## 1. Repository and requirements
 
 The initial local directory contained only `.git`. The user subsequently supplied
 `https://github.com/BAITC-Hacks/hack-3dbc6029-ace` and selected branch `elika`.
 The workspace now uses that repository as `origin`, with local `elika` tracking
-`origin/elika`. The fetched branch contains an initial README and no application
-to migrate. This plan is maintained with the repository's planning documents.
+`origin/elika`. At first fetch, the branch contained an initial README and no
+application to migrate. This plan is maintained with the planning documents.
 
 The supplied Russian competition brief is requirements evidence. The user's
 pasted specification supplies the implementation instructions, including the
@@ -362,10 +364,10 @@ README includes the problem, solution, implemented features, architecture, API a
 model, installation, environment variables, run/test commands, live demo steps,
 data handling, limits, known issues, and deferred improvements.
 
-At planning time no dependencies were installed, no app was implemented, no API
-generation was performed, and no tests/build/deployment were run. Fetching the
-user-supplied GitHub repository succeeded; push access, Vercel account availability,
-and API credentials remain unverified implementation inputs.
+The initial plan preceded application code. E01/E02 now provide the toolchain,
+minimal input workspace, shared schemas, input validation, and an explicit 501
+response for valid generation requests. No live AI generation or deployment has
+been performed. Vercel account availability and API credentials remain unverified.
 
 ## 11. Official API references checked
 
