@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+// Isolated frontend error-path test. Never call a paid provider from browser CI.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/generate', (route) => route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: { code: 'UPSTREAM_FAILURE', message: 'Test transport failure.', retryable: true } }) }));
+});
+
 test("validates input and reports the real scaffold API status", async ({ page }) => {
   await page.goto("/");
   const formError = page.locator("form").getByRole("alert");
@@ -13,8 +18,8 @@ test("validates input and reports the real scaffold API status", async ({ page }
   await page.getByLabel("Текст лекции").fill(lecture);
   const response = page.waitForResponse((response) => response.url().endsWith("/api/generate"));
   await page.getByRole("button", { name: "Создать материалы" }).click();
-  expect((await response).status()).toBe(501);
-  await expect(formError).toHaveText("Генерация материалов пока недоступна.");
+  expect((await response).status()).toBe(502);
+  await expect(formError).toContainText("Не удалось создать материалы");
   await expect(page.getByLabel("Текст лекции")).toHaveValue(lecture);
 });
 
@@ -41,7 +46,7 @@ test("submits custom provider settings without persisting the key", async ({ pag
   const submitted = page.waitForRequest((request) => request.url().endsWith("/api/generate"));
   await page.getByRole("button", { name: "Создать материалы" }).click();
   expect((await submitted).postDataJSON().provider).toEqual({ baseURL: "https://gateway.example/proxy/v1", apiKey: "test-only-browser-key", model: "vendor/custom-model" });
-  await expect(page.locator("form").getByRole("alert")).toContainText("Генерация материалов пока недоступна");
+  await expect(page.locator("form").getByRole("alert")).toContainText("Не удалось создать материалы");
   expect(await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, cookies: document.cookie }))).not.toContain("test-only-browser-key");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: `test-results/provider-${test.info().project.name}.png`, fullPage: true });

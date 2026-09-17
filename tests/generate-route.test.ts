@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock('server-only', () => ({}));
+vi.mock('@/lib/ai/pipeline', async (original) => ({ ...await original<typeof import('@/lib/ai/pipeline')>(), generateStudyKit: vi.fn().mockRejectedValue(new Error('test failure')) }));
+beforeEach(() => { vi.stubEnv('OPENAI_API_KEY', ''); });
 import { POST } from "@/app/api/generate/route";
 import { ErrorResponseSchema } from "@/lib/contracts/errors";
 import { INPUT_LIMITS } from "@/lib/input";
@@ -12,7 +15,7 @@ describe("generation endpoint foundation", () => {
     ["", 400, "EMPTY_INPUT"],
     ["Too short.", 400, "INPUT_TOO_SHORT"],
     ["x".repeat(INPUT_LIMITS.maxCharacters + 1), 413, "INPUT_TOO_LONG"],
-    ["evidence ".repeat(80), 501, "NOT_IMPLEMENTED"],
+    ["evidence ".repeat(80), 503, "SERVER_CONFIG"],
   ])("returns a typed error without producing fake material", async (lecture, status, code) => {
     const response = await POST(request({ title: "", lecture, outputLanguage: "auto" }));
     expect(response.status).toBe(status);
@@ -43,10 +46,11 @@ describe("generation endpoint foundation", () => {
 
   it("accepts a complete nested provider without echoing its key", async () => {
     const response = await POST(request({ title: "", lecture: "evidence ".repeat(80), outputLanguage: "auto", provider: { baseURL: "https://gateway.example/v1", apiKey: "test-only-private-value", model: "custom-model" } }));
-    expect(response.status).toBe(501);
+    expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).not.toContain("test-only-private-value");
-    expect(JSON.parse(body).error.code).toBe("NOT_IMPLEMENTED");
+    const events = body.trim().split('\n').map((line) => JSON.parse(line));
+    expect(events.at(-1).error.code).toBe("UPSTREAM_FAILURE");
   });
 
   it("rejects partial provider settings with a dedicated error", async () => {
