@@ -33,7 +33,8 @@ export async function generateStudyKit(input: GenerateRequest, connection: Retur
     signal.throwIfAborted();
     if (++calls > 10) throw new PipelineError('INVALID_OUTPUT', 'Generation exceeded its retry budget. Please try a shorter lecture.');
     const response = await client.responses.parse({
-      model, store: false, max_output_tokens: 10000,
+      model, store: false, max_output_tokens: 7000,
+      ...(/^gpt-(5|6)/.test(model) ? { reasoning: { effort: 'low' as const } } : {}),
       input: [{ role: 'developer', content: `${rules}\n${prompt}` }, { role: 'user', content: data }],
       text: { format: zodTextFormat(schema, name) },
     }, { signal });

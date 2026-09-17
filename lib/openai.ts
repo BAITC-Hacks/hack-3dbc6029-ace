@@ -14,7 +14,7 @@ export function createOpenAIClient(provider?: ProviderConfig) {
     project: null,
     webhookSecret: null,
     maxRetries: 0,
-    timeout: 60_000,
+    timeout: 110_000,
     logLevel: "off",
     fetchOptions: { redirect: "error" },
   });
